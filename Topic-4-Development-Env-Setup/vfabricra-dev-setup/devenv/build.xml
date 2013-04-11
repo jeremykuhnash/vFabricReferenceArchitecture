@@ -58,7 +58,7 @@
 			base-jmx-port="${springtrader.tcserver.web.base.jmx.port}"
 			bio-http-port="${springtrader.tcserver.web.bio.http.port}" 
 			bio-https-port="${springtrader.tcserver.web.bio.https.port}" 
-			template-properties-file="${installed.springtrader-template.path}/sqlfire.properties"
+			template-properties-file="${installed.springtrader-template.path}/${springtrader.tcserver.template.properties.file}"
 		/>
 		<common:set-installed component-name="sts-tcserver-vfra" component-version="LATEST" install-path="${installed.tcserver.path}/${sts.tcserver.vfra.instance}" />	
 		<pathconvert targetos="windows" property="installed.sts-tcserver-vfra.path-windows.path" >

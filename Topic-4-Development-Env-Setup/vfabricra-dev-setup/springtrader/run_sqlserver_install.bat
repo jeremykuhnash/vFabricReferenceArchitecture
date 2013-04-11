@@ -1,0 +1,1 @@
+ant -Dis.load-schema.installed=true -Dspringtrader.props.sqlserver.instance=SQLEXPRESS -Dspringtrader.dbhost=JKUHNASH-VM-W7 -Dspringtrader.location="C:\vfra-workspace\springtrader-github-jk" %1 %2 %3

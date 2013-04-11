@@ -14,39 +14,49 @@
 	<target name="git-clone" depends="init-props" unless="is.git-clone.installed">
 		<common:user-log URL="https://github.com/vFabric/springtrader/wiki/Getting-Started-Guide#wiki-lin-clone" />
 		<if>
-			<equals arg1="${use.git}"  arg2="true" />
+			<isset property="springtrader.location" />
 			<then>
-				<property name="springtrader.constructed.url" value="${springtrader.git.url}" />
-				<echo>springtrader.constructed.url -- ${springtrader.constructed.url} </echo>
-				<git-clone uri="${springtrader.constructed.url}" dest="${install.dir}/springtrader" />
+				<copy todir="${install.dir}/springtrader">
+					<fileset dir="${springtrader.location}"/>
+				</copy>
 			</then>
 			<else>
-				<propertyregex property="file.name" 
-				               input="${springtrader.git.archive.url}"
-				               regexp="(.*)\/(.*)$" 
-				               select="\2" />
-				<property name="springtrader.file" value="${temp.dir}/${file.name}" /> <!-- The destination file name. -->
-				<echo>Checking ${springtrader.file} location... </echo>
 				<if>
-					<not>
-						<available file="${springtrader.file}" />
-					</not>
+					<equals arg1="${use.git}"  arg2="true" />
 					<then>
-						<get src="${springtrader.git.archive.url}" dest="${temp.dir}"/>
+						<property name="springtrader.constructed.url" value="${springtrader.git.url}" />
+						<echo>springtrader.constructed.url -- ${springtrader.constructed.url} </echo>
+						<git-clone uri="${springtrader.constructed.url}" dest="${install.dir}/springtrader" />
 					</then>
-				</if>
-				<if>
-					<not>
-						<available file="${install.dir}/springtrader-${springtrader.branch}" type="dir" />
-					</not>
-					<then>
-						<unzip src="${springtrader.file}" dest="${temp.dir}" />	
-						<move todir="${install.dir}/springtrader" >
-							<fileset dir="${temp.dir}/springtrader-${springtrader.branch}" >
-								<include name="**/*" />
-							</fileset>
-						</move>
-					</then>
+					<else>
+						<propertyregex property="file.name" 
+						               input="${springtrader.git.archive.url}"
+						               regexp="(.*)\/(.*)$" 
+						               select="\2" />
+						<property name="springtrader.file" value="${temp.dir}/${file.name}" /> <!-- The destination file name. -->
+						<echo>Checking ${springtrader.file} location... </echo>
+						<if>
+							<not>
+								<available file="${springtrader.file}" />
+							</not>
+							<then>
+								<get src="${springtrader.git.archive.url}" dest="${temp.dir}"/>
+							</then>
+						</if>
+						<if>
+							<not>
+								<available file="${install.dir}/springtrader-${springtrader.branch}" type="dir" />
+							</not>
+							<then>
+								<unzip src="${springtrader.file}" dest="${temp.dir}" />	
+								<move todir="${install.dir}/springtrader" >
+									<fileset dir="${temp.dir}/springtrader-${springtrader.branch}" >
+										<include name="**/*" />
+									</fileset>
+								</move>
+							</then>
+						</if>
+					</else>
 				</if>
 			</else>
 		</if>
@@ -66,13 +76,19 @@
 		<common:update-prop-file 
 			property-file="${installed.git-clone.path}/${springtrader.props.database.file}"
 			property-key="database.url"
-			property-value="jdbc:postgresql://localhost:5432"
+			property-value="jdbc:postgresql://${springtrader.dbhost}:5432"
 		/>
 		<!-- original: jdbc:sqlfire://nanodbserver:1527/ -->
 		<common:update-prop-file 
 			property-file="${installed.git-clone.path}/${springtrader.props.template.sqlfire.file}"
 			property-key="springtrader.springtrader.url"
 			property-value="jdbc:sqlfire://${sqlfire.locator.bind.address}:${sqlfire.locator.client.port}/"
+		/>
+		<!-- original: jdbc\:sqlserver\://localhost\; databaseName=springtrader\ -->
+		<common:update-prop-file 
+			property-file="${installed.git-clone.path}/${springtrader.props.template.sqlserver.file}"
+			property-key="springtrader.springtrader.url"
+			property-value="jdbc:sqlserver://${springtrader.dbhost}\\${springtrader.props.sqlserver.instance}:${springtrader.props.sqlserver.port}; databaseName=${springtrader.dbname}"
 		/>
 		<!-- original: jdbc\:sqlfire\://nanodbserver\:1527/ -->
 		<common:update-prop-file 
@@ -83,13 +99,14 @@
 		<common:update-prop-file 
 			property-file="${installed.git-clone.path}/${springtrader.props.tools.sqlf.file}"
 			property-key="dbHost"
-			property-value="${sqlfire.locator.bind.address}"
+			property-value="${springtrader.dbhost}"
 		/>		
 		<common:update-prop-file 
 			property-file="${installed.git-clone.path}/${springtrader.props.tools.props.file}"
 			property-key="dbHost"
-			property-value="${sqlfire.locator.bind.address}"
+			property-value="${springtrader.dbhost}"
 		/>
+		
 		<common:set-installed component-name="config-services" component-version="LATEST" install-path="${install.dir}/springtrader" />
 	</target>
 	
@@ -113,7 +130,13 @@
 		<copy file="${installed.gemfire.path}/lib/gemfire.jar" todir="${install.dir}/springtrader/lib" />
 	</target>
 
-	<target name="springtrader-build" depends="init-props, git-clone, setupGemfire, setupSqlfireClient, config-services" unless="is.springtrader-build.installed" >
+	<target name="setupSqlServer" depends="init-props">
+		<common:user-log URL="https://github.com/vFabric/springtrader/wiki/Getting-Started-Guide#wiki-lin-gemf" />
+		<copy file="${vfra.repo}/sqljdbc4.jar" todir="${install.dir}/springtrader/lib" />
+		<copy file="${vfra.repo}/sqljdbc4.jar" tofile="${install.dir}/springtrader/templates/springtrader/lib/sqljdbc4.jar" />
+	</target>
+	
+	<target name="springtrader-build" depends="init-props, git-clone, setupGemfire, setupSqlfireClient, setupSqlServer, config-services" unless="is.springtrader-build.installed" >
 		<common:user-log URL="https://github.com/vFabric/springtrader/wiki/Getting-Started-Guide#wiki-lin-build" />
 		<if>
 			<isset property="http.proxyHost" />
@@ -251,7 +274,7 @@
 			base-jmx-port="${springtrader.tcserver.web.base.jmx.port}"
 			bio-http-port="${springtrader.tcserver.web.bio.http.port}" 
 			bio-https-port="${springtrader.tcserver.web.bio.https.port}" 
-			template-properties-file="${installed.springtrader-template.path}/sqlfire.properties"
+			template-properties-file="${installed.springtrader-template.path}/${springtrader.tcserver.template.properties.file}"
 		/>
 		<common:set-installed component-name="springtrader-tcserver-web" component-version="LATEST" install-path="${install.dir}/${springtrader.tcserver.web.instance}" />	
 		<pathconvert targetos="windows" property="installed.springtrader-tcserver-web.path-windows.path" >
@@ -275,7 +298,7 @@
 			base-jmx-port="${springtrader.tcserver.async.base.jmx.port}"
 			bio-http-port="${springtrader.tcserver.async.bio.http.port}" 
 			bio-https-port="${springtrader.tcserver.async.bio.https.port}" 
-			template-properties-file="${installed.springtrader-template.path}/sqlfire.properties"
+			template-properties-file="${installed.springtrader-template.path}/${springtrader.tcserver.template.properties.file}"
 		/>		
 		<common:set-installed component-name="springtrader-tcserver-async" component-version="LATEST" install-path="${install.dir}/${springtrader.tcserver.async.instance}" />
 		<pathconvert targetos="windows" property="installed.springtrader-tcserver-async.path-windows.path" >
@@ -380,7 +403,7 @@
 						<windows-groovy-exec classpath-ref="datagen.classpath" dir="${datagen.dir}" script="NanotraderCreateSqlfSchema.groovy" />
 					</then>
 					<else>
-						<property name="sqlf.props.file" value="${basedir}/src/scripts/nanotrader.sqlf.properties" />
+						<property name="sqlf.props.file" value="${basedir}/src/scripts/${datagen.db.props.file}" />
 						<property file="${sqlf.props.file}" prefix="sqlf."  />
 						<echo>PRINTING PROPERTIES</echo>
 						<propertyselector property="propertyList"
@@ -600,7 +623,10 @@
 		<delete file="${install.dir}/nano-configure.installed" />
 		<delete file="${install.dir}/load-data.installed" />		
 	</target>
+
+	<target name="clean" depends="common-deploy.clean, clean-template" />
+	
+	<target name="redeploy" depends="stop, clean-tcserver, deploy-war, start" />
 	
 	<target name="clean-processes" depends="init-props, stop" description="Forcibly clean up running processes so that clean target works regardless of state. " />
-
 </project>
