@@ -143,11 +143,12 @@
 		<attribute name="bio-https-port" description="Specify the HTTPS port to be used." />
 		<attribute name="template-properties-file" description="Properties for instance creation, injected into the template." />		
 		<sequential>
-			<echo>Creating tc server with properties: @{tcserver-root}${line.separator} 
+			<echo>Creating tc server '@{instance-name}' with properties: @{tcserver-root}${line.separator} 
 				template: @{template}${line.separator}
 				base.jmx.port=@{base-jmx-port}${line.separator}
 				bio.http.port=@{bio-http-port}${line.separator}
-				bio.https.port=@{bio-https-port}
+				bio.https.port=@{bio-https-port}${line.separator}
+				properties file: @{template-properties-file}
 			</echo>
 			<if>
 				<equals arg1="${os-family}" arg2="windows" />

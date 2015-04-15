@@ -9,6 +9,8 @@
 		</pathconvert>
 		<property name="datagen.dir" value="${temp.dir}/datagen" />
 		<mkdir dir="${datagen.dir}" />
+		<property name="tc.template.properties" value="${installed.springtrader-template.path}/${springtrader.tcserver.template.properties.file}" /> 
+		<echo>Using template properties file for tc server instance creation: ${tc.template.properties}</echo>
 	</target>
 		
 	<target name="git-clone" depends="init-props" unless="is.git-clone.installed">
@@ -45,12 +47,12 @@
 						</if>
 						<if>
 							<not>
-								<available file="${install.dir}/springtrader-${springtrader.branch}" type="dir" />
+								<available file="${install.dir}/springtrader${springtrader.branch}" type="dir" />
 							</not>
 							<then>
 								<unzip src="${springtrader.file}" dest="${temp.dir}" />	
 								<move todir="${install.dir}/springtrader" >
-									<fileset dir="${temp.dir}/springtrader-${springtrader.branch}" >
+									<fileset dir="${temp.dir}/springtrader${springtrader.branch}" >
 										<include name="**/*" />
 									</fileset>
 								</move>
@@ -90,6 +92,17 @@
 			property-key="springtrader.springtrader.url"
 			property-value="jdbc:sqlserver://${springtrader.dbhost}\\${springtrader.props.sqlserver.instance}:${springtrader.props.sqlserver.port}; databaseName=${springtrader.dbname}"
 		/>
+		<common:update-prop-file 
+			property-file="${installed.git-clone.path}/${springtrader.props.template.sqlserver.file}"
+			property-key="springtrader.springtrader.username"
+			property-value="${springtrader.username}"
+		/>
+		<common:update-prop-file 
+			property-file="${installed.git-clone.path}/${springtrader.props.template.sqlserver.file}"
+			property-key="springtrader.springtrader.password"
+			property-value="${springtrader.password}"
+		/>
+		
 		<!-- original: jdbc\:sqlfire\://nanodbserver\:1527/ -->
 		<common:update-prop-file 
 			property-file="${installed.git-clone.path}/${springtrader.props.template.postgres.file}"
@@ -117,6 +130,7 @@
 		<common:reset-prop-file file="${installed.git-clone.path}/${springtrader.props.tools.sqlf.file}" /> 
 		<common:reset-prop-file file="${installed.git-clone.path}/${springtrader.props.tools.props.file}" />		
 		<delete file="${install.dir}/config-services.installed" />
+		<var name="is.config-services.installed" unset="true" />
 	</target>
 	
 	<target name="setupSqlfireClient" depends="init-props">
@@ -136,7 +150,9 @@
 		<copy file="${vfra.repo}/sqljdbc4.jar" tofile="${install.dir}/springtrader/templates/springtrader/lib/sqljdbc4.jar" />
 	</target>
 	
-	<target name="springtrader-build" depends="init-props, git-clone, setupGemfire, setupSqlfireClient, setupSqlServer, config-services" unless="is.springtrader-build.installed" >
+	<target name="setup" depends="init-props, git-clone, config-services, setupSqlfireClient, setupGemfire, setupSqlServer" />
+	
+	<target name="springtrader-build" depends="init-props, setup" unless="is.springtrader-build.installed" >
 		<common:user-log URL="https://github.com/vFabric/springtrader/wiki/Getting-Started-Guide#wiki-lin-build" />
 		<if>
 			<isset property="http.proxyHost" />
@@ -216,7 +232,7 @@
 		<delete file="${install.dir}/springtrader-build.installed" />
 	</target>	
 	
-	<target name="install-template" depends="init-props" unless="is.springtrader-template.installed">
+	<target name="install-template" depends="init-props, setup" unless="is.springtrader-template.installed">
 		<check-tcserver prop="is.tcserver.installed" />
 		<common:user-log URL="https://github.com/vFabric/springtrader/wiki/Getting-Started-Guide#wiki-lin-deploy" />
 		<echo> Checking ${installed.tcserver.path}/templates/${springtrader.tcserver.template}</echo>
@@ -274,7 +290,7 @@
 			base-jmx-port="${springtrader.tcserver.web.base.jmx.port}"
 			bio-http-port="${springtrader.tcserver.web.bio.http.port}" 
 			bio-https-port="${springtrader.tcserver.web.bio.https.port}" 
-			template-properties-file="${installed.springtrader-template.path}/${springtrader.tcserver.template.properties.file}"
+			template-properties-file="${tc.template.properties}"
 		/>
 		<common:set-installed component-name="springtrader-tcserver-web" component-version="LATEST" install-path="${install.dir}/${springtrader.tcserver.web.instance}" />	
 		<pathconvert targetos="windows" property="installed.springtrader-tcserver-web.path-windows.path" >
@@ -298,7 +314,7 @@
 			base-jmx-port="${springtrader.tcserver.async.base.jmx.port}"
 			bio-http-port="${springtrader.tcserver.async.bio.http.port}" 
 			bio-https-port="${springtrader.tcserver.async.bio.https.port}" 
-			template-properties-file="${installed.springtrader-template.path}/${springtrader.tcserver.template.properties.file}"
+			template-properties-file="${tc.template.properties}"
 		/>		
 		<common:set-installed component-name="springtrader-tcserver-async" component-version="LATEST" install-path="${install.dir}/${springtrader.tcserver.async.instance}" />
 		<pathconvert targetos="windows" property="installed.springtrader-tcserver-async.path-windows.path" >
@@ -345,7 +361,7 @@
 		<common:set-installed component-name="groovy" component-version="LATEST" install-path="${install.dir}/groovy-${groovy.version}" />		
 	</target>
 	
-	<target name="deploy" depends="common-deploy.deploy, git-clone, config-services, setupSqlfireClient, setupGemfire, springtrader-build, springtrader-tcserver, deploy-war, deploy-groovy" description="git clones and builds springtrader. Target chain is git-clone -> springtrader-build -> deploy. ">
+	<target name="deploy" depends="common-deploy.deploy, springtrader-build, springtrader-tcserver, deploy-war, deploy-groovy" description="git clones and builds springtrader. Target chain is git-clone -> springtrader-build -> deploy. ">
 		<common:set-installed component-name="${component}" component-version="LATEST" install-path="${install.dir}" />
 	</target>
 	
@@ -606,7 +622,7 @@
 	<target name="stop" depends="init, init-props, stop-async, stop-web, common-deploy.stop" description="Stops tc server containers." > 
 	</target>
 	
-	<target name="clean-tcserver" depends="init-props, stop, clean-processes"> 
+	<target name="clean-tcserver" depends="init-props, stop, clean-processes, config-reset"> 
 		<delete dir="${instance.root.dir}/${springtrader.tcserver.web.instance}" />
 		<delete file="${install.dir}/springtrader-tcserver-web.installed" />
 		<var name="is.springtrader-tcserver-web.installed" unset="true" />
@@ -626,7 +642,7 @@
 
 	<target name="clean" depends="common-deploy.clean, clean-template" />
 	
-	<target name="redeploy" depends="stop, clean-tcserver, deploy-war, start" />
+	<target name="redeploy" depends="stop, clean-tcserver, deploy, deploy-war, start" />
 	
 	<target name="clean-processes" depends="init-props, stop" description="Forcibly clean up running processes so that clean target works regardless of state. " />
 </project>

@@ -15,6 +15,8 @@
 				<var name="vnc.enabled" unset="true" />
 			</then>
 		</if>
+		<property file="${basedir}/../sts/install/tcserver.installed" />
+		<property name="tcserver.devenv" value="${installed.tcserver.path}/${sts.tcserver.vfra.instance}" />
 	</target>
 	
 	<target name="deploy-noVNC" depends="init,init-props" unless="is.noVNC-deploy.installed" if="${vnc.enabled}">
@@ -284,5 +286,7 @@
 		<echo>You may have to stop STS and close any browser views manually.</echo>
 	</target>
 	
-	<target name="clean" depends="stop, common-deploy.clean" />
+	<target name="clean" depends="stop, common-deploy.clean" >
+		<delete dir="${tcserver.devenv}" />
+	</target>
 </project>

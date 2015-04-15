@@ -66,7 +66,7 @@
 					</exec>
 					<echo>Building erlang... </echo>
 					<exec dir="${erlang.unzip.dir}" executable="make" logerror="make.error" failifexecutionfails="true" failonerror="true">
-						<arg value="-j2" />
+						<arg value="-j8" />
 					</exec>
 					<echo>Installing erlang... </echo>
 					<exec dir="${erlang.unzip.dir}" executable="make" logerror="make-install.error" failifexecutionfails="true" failonerror="">
