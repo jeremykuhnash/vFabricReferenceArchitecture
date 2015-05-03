@@ -271,6 +271,7 @@
 			<then>
 				<echo>Deleting '${installed.tcserver.path}/templates/${springtrader.tcserver.template}'</echo>
 				<delete dir="${installed.tcserver.path}/templates/${springtrader.tcserver.template}"/>
+				<delete file="${install.dir}/springtrader-template.installed" failonerror="true"/>
 			</then>
 			<else>
 				<echo>Did not find '${installed.tcserver.path}/templates/${springtrader.tcserver.template}' for removal.</echo>
@@ -642,7 +643,7 @@
 
 	<target name="clean" depends="common-deploy.clean, clean-template" />
 	
-	<target name="redeploy" depends="stop, clean-tcserver, deploy, deploy-war, start" />
+	<target name="redeploy" depends="stop, clean-template, install-template, clean-tcserver, deploy, deploy-war, start" />
 	
 	<target name="clean-processes" depends="init-props, stop" description="Forcibly clean up running processes so that clean target works regardless of state. " />
 </project>
