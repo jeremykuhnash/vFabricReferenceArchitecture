@@ -10,7 +10,7 @@ Getting Started Videos:
 
 [Install on Redhat Enterprise Linux](https://www.youtube.com/watch?v=K1b44EvwKmE)
 
-## Authored by Jeremy Kuhnash, Cloud Software and Automation Architect
+### by Jeremy Kuhnash, Cloud Software and Automation Architect
 
 
 
